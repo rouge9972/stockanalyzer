@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Market Analyst</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+        <polyline points="16 7 22 7 22 13"></polyline>
+      </svg>
+      Market Analyst
+    </div>
+  </div>
+
+  <div class="search-wrapper">
+    <form class="search-form" id="searchForm">
+      <input class="search-input" id="searchInput" type="text"
+             placeholder="Symbol — AAPL, BTC-USD, EURUSD=X, SPY…" autocomplete="off" />
+      <button class="search-btn" type="submit">Search</button>
+    </form>
+    <div id="searchDropdown" hidden></div>
+  </div>
+
+  <div class="header-right">
+    <button class="icon-btn" id="portfolioBtn" title="Portfolio Builder">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+      </svg>
+      Portfolio
+    </button>
+    <button class="icon-btn" id="learnBtn" title="Learning Center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+      </svg>
+      Learn
+    </button>
+    <button class="icon-btn" id="bellBtn" title="Alerts">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <span class="badge" id="alertBadge" hidden>0</span>
+    </button>
+    <button class="icon-btn" id="watchlistToggle" title="Watchlist">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+      </svg>
+      Watchlist
+    </button>
+  </div>
+</header>
+
+<!-- ── ALERT LOG ── -->
+<div class="alert-panel" id="alertPanel" hidden>
+  <div class="alert-panel-header">
+    <span>Alert Log</span>
+    <button class="close-btn" id="closeAlerts">✕</button>
+  </div>
+  <div class="alert-list" id="alertList"><p class="muted">No alerts yet.</p></div>
+</div>
+
+<!-- ── MAIN LAYOUT ── -->
+<main class="main" id="main">
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+      <polyline points="16 7 22 7 22 13"></polyline>
+    </svg>
+    <h2>Enter a symbol to get started</h2>
+    <p>Stocks, ETFs, crypto, forex — try AAPL, BTC-USD, EURUSD=X, SPY</p>
+  </div>
+
+  <!-- CONTENT (hidden until search) -->
+  <div class="content" id="content" hidden>
+
+    <!-- TOP ROW: chart + quote card -->
+    <div class="top-row">
+
+      <!-- CHART -->
+      <div class="chart-wrap card">
+        <div class="card-header">
+          <span id="chartTitle">Chart</span>
+          <div class="tv-interval-btns">
+            <button class="tv-btn active" data-interval="D">1D</button>
+            <button class="tv-btn" data-interval="W">1W</button>
+            <button class="tv-btn" data-interval="M">1M</button>
+          </div>
+        </div>
+        <div id="tvChart"></div>
+      </div>
+
+      <!-- QUOTE SIDEBAR -->
+      <div class="quote-sidebar">
+
+        <div class="card quote-card" id="quoteCard">
+          <div class="loading-placeholder">Loading…</div>
+        </div>
+
+        <div class="card poll-card">
+          <label class="poll-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Auto-refresh
+          </label>
+          <div class="poll-row">
+            <select id="pollInterval">
+              <option value="0">Off</option>
+              <option value="5">5 min</option>
+              <option value="15" selected>15 min</option>
+              <option value="30">30 min</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="analyze-btn" id="analyzeBtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          Analyze with AI
+        </button>
+
+        <button class="report-btn" id="reportBtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          Generate Report
+        </button>
+
+        <button class="watchlist-add-btn" id="addWatchlistBtn" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Add to Watchlist
+        </button>
+
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-container card">
+      <div class="tabs-nav" id="tabsNav">
+        <button class="tab-btn active" data-tab="technicals">Technicals</button>
+        <button class="tab-btn" data-tab="fundamentals">Fundamentals</button>
+        <button class="tab-btn" data-tab="news">News</button>
+        <button class="tab-btn" data-tab="ai">AI Analysis</button>
+      </div>
+      <div class="tab-content" id="tabContent">
+        <div class="loading-placeholder">Select a symbol to load data.</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+</main>
+
+<!-- ── WATCHLIST SIDEBAR ── -->
+<aside class="watchlist-panel" id="watchlistPanel">
+  <div class="watchlist-header">
+    <span>Watchlist</span>
+    <button class="close-btn" id="closeWatchlist">✕</button>
+  </div>
+  <ul class="watchlist-items" id="watchlistItems"></ul>
+  <div class="poll-settings">
+    <label class="poll-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      Alert check interval
+    </label>
+    <select id="watchlistPollInterval">
+      <option value="0">Off</option>
+      <option value="5">5 min</option>
+      <option value="15" selected>15 min</option>
+      <option value="30">30 min</option>
+    </select>
+  </div>
+</aside>
+
+<!-- ── METRIC TOOLTIP ── -->
+<div id="metricTip" hidden>
+  <div class="tip-header">
+    <span id="tipName"></span>
+    <button id="tipClose" class="close-btn">✕</button>
+  </div>
+  <div class="tip-body">
+    <div class="tip-section"><h4>What is it?</h4><p id="tipWhat"></p></div>
+    <div class="tip-section"><h4>What does it indicate?</h4><p id="tipIndicates"></p></div>
+    <div class="tip-section"><h4>Why is it useful?</h4><p id="tipUseful"></p></div>
+  </div>
+</div>
+
+<!-- ── LEARNING CENTER ── -->
+<aside class="learn-panel" id="learnPanel">
+  <div class="learn-header">
+    <div class="learn-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+      </svg>
+      Learning Center
+    </div>
+    <button class="close-btn" id="closeLearn">✕</button>
+  </div>
+  <div class="learn-tabs-nav" id="learnTabsNav">
+    <button class="learn-tab-btn active" data-ltab="guide">Tool Guide</button>
+    <button class="learn-tab-btn" data-ltab="technical">Technicals</button>
+    <button class="learn-tab-btn" data-ltab="fundamental">Fundamentals</button>
+    <button class="learn-tab-btn" data-ltab="corporate">Corp Finance</button>
+    <button class="learn-tab-btn" data-ltab="resources">Free Resources</button>
+  </div>
+  <div class="learn-content" id="learnContent"></div>
+</aside>
+
+<!-- ── REPORT MODAL ── -->
+<div class="modal-overlay" id="reportOverlay" hidden>
+  <div class="modal" id="reportModal">
+    <div class="modal-header">
+      <span id="reportTitle">Stock Report</span>
+      <div class="modal-actions">
+        <button class="icon-btn" onclick="window.print()" title="Print / Save PDF">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+        </button>
+        <button class="close-btn" id="closeReport">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="reportBody"></div>
+  </div>
+</div>
+
+<!-- ── PORTFOLIO PANEL ── -->
+<aside class="portfolio-panel" id="portfolioPanel">
+  <div class="portfolio-header">
+    <div class="portfolio-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+      </svg>
+      Portfolio Builder
+    </div>
+    <button class="close-btn" id="closePortfolio">✕</button>
+  </div>
+
+  <div class="portfolio-form" id="portfolioForm">
+    <div class="pf-field">
+      <label>Capital to invest</label>
+      <div class="pf-capital-row">
+        <select id="pfCurrency">
+          <option value="USD">$ USD</option>
+          <option value="EUR">€ EUR</option>
+          <option value="GBP">£ GBP</option>
+        </select>
+        <input type="number" id="pfCapital" value="10000" min="100" step="100" />
+      </div>
+    </div>
+    <div class="pf-field">
+      <label>Number of positions: <span id="pfPositionsVal">8</span></label>
+      <input type="range" id="pfPositions" min="4" max="20" value="8" />
+      <label class="pf-ai-opt" for="pfPosAI">
+        <input type="checkbox" id="pfPosAI" checked>
+        <span>Let AI decide</span>
+      </label>
+    </div>
+    <div class="pf-field">
+      <label>Risk tolerance</label>
+      <div class="pf-radio-row">
+        <label class="pf-radio"><input type="radio" name="pfRisk" value="conservative"> Conservative</label>
+        <label class="pf-radio"><input type="radio" name="pfRisk" value="moderate"> Moderate</label>
+        <label class="pf-radio"><input type="radio" name="pfRisk" value="aggressive"> Aggressive</label>
+        <label class="pf-radio pf-radio-none"><input type="radio" name="pfRisk" value="" checked> No preference</label>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label>Investment focus</label>
+      <div class="pf-check-grid">
+        <label class="pf-check"><input type="checkbox" name="pfFocus" value="Growth"> Growth</label>
+        <label class="pf-check"><input type="checkbox" name="pfFocus" value="Dividend"> Dividend</label>
+        <label class="pf-check"><input type="checkbox" name="pfFocus" value="Value"> Value</label>
+        <label class="pf-check"><input type="checkbox" name="pfFocus" value="Momentum"> Momentum</label>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label>Preferred sectors <span class="pf-optional">(optional)</span></label>
+      <div class="pf-check-grid">
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Technology"> Technology</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Financials"> Financials</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Healthcare"> Healthcare</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Energy"> Energy</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Consumer"> Consumer</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Industrials"> Industrials</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Real Estate"> Real Estate</label>
+        <label class="pf-check"><input type="checkbox" name="pfSector" value="Utilities"> Utilities</label>
+      </div>
+    </div>
+    <div class="pf-field">
+      <label>Geographic focus</label>
+      <div class="pf-radio-row">
+        <label class="pf-radio"><input type="radio" name="pfGeo" value="US Only"> US Only</label>
+        <label class="pf-radio"><input type="radio" name="pfGeo" value="Global"> Global</label>
+        <label class="pf-radio"><input type="radio" name="pfGeo" value="Europe"> Europe</label>
+        <label class="pf-radio"><input type="radio" name="pfGeo" value="Mixed"> Mixed</label>
+        <label class="pf-radio pf-radio-none"><input type="radio" name="pfGeo" value="" checked> No preference</label>
+      </div>
+    </div>
+    <button class="pf-build-btn" id="pfBuildBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      Build Portfolio
+    </button>
+  </div>
+
+  <div class="portfolio-results" id="portfolioResults" hidden>
+    <div class="pf-results-header">
+      <button class="icon-btn" id="pfBackBtn">← Back</button>
+      <span id="pfResultsTitle">Your Portfolio</span>
+      <div class="pf-results-actions">
+        <button class="icon-btn" id="pfRegenerateBtn" title="Regenerate">↻</button>
+        <button class="icon-btn" id="pfExportBtn">⬇ Export</button>
+      </div>
+    </div>
+    <div class="pf-results-scroll">
+      <div class="pf-chart-wrap">
+        <canvas id="portfolioChart"></canvas>
+      </div>
+      <div class="pf-holdings" id="pfHoldings"></div>
+      <div class="pf-thesis" id="pfThesis"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── DISCLAIMER ── -->
+<div style="position:fixed;bottom:0;left:0;right:0;z-index:9999;
+            font-family:Inter,system-ui,sans-serif;font-size:11px;line-height:1.4;
+            color:#9aa0a6;background:rgba(20,20,22,0.92);
+            border-top:1px solid rgba(255,255,255,0.08);
+            padding:6px 14px;text-align:center;backdrop-filter:blur(4px);">
+  Educational and illustrative purposes only — not financial advice. AI-generated
+  signals are unvalidated and may be inaccurate. Do your own research.
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
